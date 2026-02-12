@@ -1,4 +1,5 @@
-import type { User } from '../../../generated/prisma/client';
+import { Request } from 'express';
+import { User } from '../../generated/prisma/client';
 type Payload = Pick<User, 'id' | 'role'>;
 
 declare global {
@@ -8,3 +9,5 @@ declare global {
     }
   }
 }
+
+export {};
