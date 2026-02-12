@@ -7,7 +7,7 @@ const envVarsSchema = z.object({
     .string()
     .default('3000')
     .transform((val) => parseInt(val, 10)),
-  DATABASE_URL: z.string().describe('PostgreSQL DB url'),
+  DATABASE_URL: z.url().describe('PostgreSQL DB url'),
   JWT_SECRET: z.string().describe('JWT secret key'),
   JWT_ACCESS_EXPIRATION_MINUTES: z
     .string()

@@ -1,14 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
-import jwt, { JwtPayload } from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import httpStatus from 'http-status';
 import { ENV } from '../config/env';
 import { ApiError } from '../utils/apiError';
-import { Role } from '../../generated/prisma/enums';
+import { Role } from '../generated/prisma/enums';
 import { prisma } from '../lib/prisma';
 
-interface AuthPayload extends JwtPayload {
-  id: string;
-  role: string;
+declare global {
+  namespace Express {
+    interface Request {
+      user: {
+        id: string;
+        role: Role;
+      };
+    }
+  }
 }
 
 const auth =
@@ -20,17 +26,17 @@ const auth =
         throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
       }
 
-      const payload = jwt.verify(token, ENV.jwt.secret) as AuthPayload;
-      const user = await prisma.user.findUnique({ where: { id: payload.id } });
+      const payload = jwt.verify(token, ENV.jwt.secret) as any;
+      const user = await prisma.user.findUnique({ where: { id: payload.sub } });
 
       if (!user) {
         throw new ApiError(httpStatus.UNAUTHORIZED, 'Please authenticate');
       }
 
-      req.user = user;
+      req.user = { id: user.id, role: user.role };
 
       if (requiredRights.length) {
-        const userRights = [user.role]; // Simplified rights management
+        const userRights = [user.role];
         const hasRequiredRights = requiredRights.every((requiredRight) =>
           userRights.includes(requiredRight),
         );

@@ -23,9 +23,7 @@ const validate =
       next();
     } catch (error: unknown) {
       if (error instanceof z.ZodError) {
-        const errorMessage = error.issues
-          ? error.issues.map((e: any) => e.message).join(', ')
-          : 'Validation Error';
+        const errorMessage = error.issues[0]?.message || 'Validation Error';
         return next(new ApiError(httpStatus.BAD_REQUEST, errorMessage));
       } else {
         throw error;

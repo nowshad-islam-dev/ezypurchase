@@ -14,10 +14,7 @@
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
     "skipLibCheck": true,
-    "allowJs": true,
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "allowJs": true
   },
   "include": ["src/**/*"],
   "exclude": ["node_modules", "generated/**/*.ts"]
