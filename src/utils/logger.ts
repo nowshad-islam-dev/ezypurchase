@@ -1,26 +1,29 @@
 import winston from 'winston';
 import { ENV } from '../config/env';
 
-const enumerateErrorFormat = winston.format((info) => {
-  if (info instanceof Error) {
-    Object.assign(info, { message: info.message, stack: info.stack });
-  }
-  return info;
-});
+const isProduction = ENV.env === 'production';
+
+const formatConfig = winston.format.combine(
+  winston.format.timestamp(),
+  winston.format.errors({ stack: true }),
+  winston.format.metadata(),
+
+  isProduction
+    ? winston.format.json()
+    : winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple(),
+      ),
+);
 
 export const logger = winston.createLogger({
-  level: ENV.env === 'development' ? 'debug' : 'info',
-  format: winston.format.combine(
-    enumerateErrorFormat(),
-    ENV.env === 'development'
-      ? winston.format.colorize()
-      : winston.format.json(),
-    winston.format.splat(),
-    winston.format.printf(({ level, message }) => `${level}: ${message}`),
-  ),
+  level: isProduction ? 'info' : 'debug',
+  format: formatConfig,
   transports: [
     new winston.transports.Console({
-      stderrLevels: ['error'],
+      handleExceptions: true, // Log crashes before the process exits
+      handleRejections: true, // Log unhandled promise rejections
     }),
   ],
+  exitOnError: false, // Don't let a logging failure kill the app
 });
