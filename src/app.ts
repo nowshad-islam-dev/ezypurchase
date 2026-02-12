@@ -3,6 +3,7 @@ import helmet from 'helmet';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import { errorConverter, errorHandler } from './middlewares/error';
+import { requestLogger } from './middlewares/requestLogger';
 import { ApiError } from './utils/apiError';
 import routes from './routes';
 
@@ -23,8 +24,11 @@ app.use(cookieParser());
 // enable cors
 app.use(cors());
 
+// request logger
+app.use(requestLogger);
+
 // v1 api routes
-app.use('/v1', routes);
+app.use('/api/v1/', routes);
 
 //send back a 404 error for any unknown api request
 app.use((req, res, next) => {
