@@ -17,6 +17,7 @@ const envVarsSchema = z.object({
     .string()
     .default('30')
     .transform((val) => parseInt(val, 10)),
+  IMAGEKIT_PRIVATE_KEY: z.string().startsWith('private'),
 });
 
 const parseResult = envVarsSchema.safeParse(process.env);
@@ -38,4 +39,5 @@ export const ENV = {
     accessExpirationMinutes: envVars.JWT_ACCESS_EXPIRATION_MINUTES,
     refreshExpirationDays: envVars.JWT_REFRESH_EXPIRATION_DAYS,
   },
+  imagekitApiKey: envVars.IMAGEKIT_PRIVATE_KEY,
 };
