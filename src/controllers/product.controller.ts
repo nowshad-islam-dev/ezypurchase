@@ -12,11 +12,13 @@ const createProduct = async (req: Request, res: Response) => {
 };
 
 const getProducts = async (req: Request, res: Response) => {
-  const filter = { name: req.query.name as string };
+  const filter = { slug: req.validated.product as string };
   const options = {
-    sortBy: req.query.sortBy as string,
-    limit: req.query.limit ? parseInt(req.query.limit as string, 10) : 10,
-    page: req.query.page ? parseInt(req.query.page as string, 10) : 1,
+    sortBy: req.validated.sortBy as string,
+    limit: req.validated.limit
+      ? parseInt(req.validated.limit as string, 10)
+      : 10,
+    page: req.validated.page ? parseInt(req.validated.page as string, 10) : 1,
   };
   const result = await productService.queryProducts(filter, options);
   res.send(result);
@@ -30,6 +32,22 @@ const getProduct = async (req: Request, res: Response) => {
     throw new ApiError(httpStatus.NOT_FOUND, 'Product not found');
   }
   res.send(product);
+};
+
+const getProductsByCategory = async (req: Request, res: Response) => {
+  const categorySlug = req.validated.category as string;
+  const options = {
+    sortBy: req.validated.sortBy as string,
+    limit: req.validated.limit
+      ? parseInt(req.validated.limit as string, 10)
+      : 10,
+    page: req.validated.page ? parseInt(req.validated.page as string, 10) : 1,
+  };
+  const result = await productService.getProductsByCategory(
+    categorySlug,
+    options,
+  );
+  res.send(result);
 };
 
 const updateProduct = async (req: Request, res: Response) => {
@@ -49,6 +67,7 @@ export const productController = {
   createProduct,
   getProducts,
   getProduct,
+  getProductsByCategory,
   updateProduct,
   deleteProduct,
 };

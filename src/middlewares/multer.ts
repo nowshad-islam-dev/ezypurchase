@@ -58,7 +58,7 @@ export const uploadSingle = (fieldName: string, folderName: string) => {
       }
 
       if (!req.file) {
-        return next(new ApiError(httpStatus.BAD_REQUEST, 'File upload failed'));
+        return next();
       }
       try {
         // convert the file buffer into base64 string
@@ -89,7 +89,7 @@ export const uploadArray = (fieldName: string, folderName: string) => {
       }
 
       if (!(req.files && Array.isArray(req.files) && req.files.length > 0)) {
-        return next(new ApiError(httpStatus.BAD_REQUEST, 'File upload failed'));
+        return next();
       }
 
       try {

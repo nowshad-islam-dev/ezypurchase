@@ -8,6 +8,7 @@ import {
   getProduct,
   updateProduct,
   deleteProduct,
+  getProductsByCategory,
 } from '../validations/product.validation';
 import { productController } from '../controllers/product.controller';
 import { Role } from '../generated/prisma/enums';
@@ -23,6 +24,12 @@ router
     productController.createProduct,
   )
   .get(validate(getProducts), productController.getProducts);
+
+router.get(
+  '/category',
+  validate(getProductsByCategory),
+  productController.getProductsByCategory,
+);
 
 router
   .route('/:productId')

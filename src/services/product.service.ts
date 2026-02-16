@@ -8,11 +8,41 @@ import {
 import { prisma } from '../lib/prisma';
 import { ApiError } from '../utils/apiError';
 
+interface ProductCreateWithCategoryIdInput extends ProductCreateInput {
+  categoryId: string;
+}
+
 const createProduct = async (
-  productBody: ProductCreateInput,
+  productBody: ProductCreateWithCategoryIdInput,
 ): Promise<Product> => {
+  const isSlugExists = await prisma.product.findUnique({
+    where: { slug: productBody.slug },
+  });
+  const isCategoryExists = await prisma.category.findUnique({
+    where: { id: productBody.categoryId },
+  });
+
+  if (isSlugExists) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `Generated slug: ${productBody.slug} already exists`,
+    );
+  }
+  if (!isCategoryExists) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      `Provided category does not exist`,
+    );
+  }
+  const { categoryId, ...rest } = productBody;
+
   return prisma.product.create({
-    data: productBody,
+    data: {
+      ...rest,
+      category: {
+        connect: { id: categoryId },
+      },
+    },
   });
 };
 
@@ -24,9 +54,10 @@ const queryProducts = async (
   const limit = options.limit || 10;
   const skip = (page - 1) * limit;
 
-  // Simple filtering by product name (contains)
-  const where: ProductWhereInput = filter.name
-    ? { name: { contains: filter.name, mode: 'insensitive' } }
+  // Simple filtering by product slug (contains)
+  // if slug is not provided all products will be returned
+  const where: ProductWhereInput = filter.slug
+    ? { slug: { contains: filter.slug, mode: 'insensitive' } }
     : {};
 
   const products = await prisma.product.findMany({
@@ -39,6 +70,45 @@ const queryProducts = async (
   });
 
   const total = await prisma.product.count({ where });
+
+  return { products, total, page, limit, totalPages: Math.ceil(total / limit) };
+};
+
+const getProductsByCategory = async (
+  slug: string,
+  options: { limit?: number; page?: number; sortBy?: string },
+) => {
+  const page = options.page || 1;
+  const limit = options.limit || 10;
+  const skip = (page - 1) * limit;
+
+  const categories = await prisma.$queryRaw<
+    { id: string }[]
+  >`WITH RECURSIVE category_tree AS (
+  SELECT id from "Category" WHERE slug=${slug}
+   UNION ALL
+    SELECT c.id
+    FROM "Category" c
+    JOIN category_tree ct ON c."parentId" = ct.id
+  )SELECT id FROM category_tree;
+`;
+  if (categories.length === 0) {
+    throw new ApiError(400, 'Category does not exists');
+  }
+
+  const categoryIds = categories.map((c) => c.id);
+
+  const [products, total] = await Promise.all([
+    prisma.product.findMany({
+      where: { categoryId: { in: categoryIds } },
+      skip,
+      take: limit,
+      orderBy: options.sortBy
+        ? { [options.sortBy]: 'asc' }
+        : { createdAt: 'desc' },
+    }),
+    prisma.product.count({ where: { categoryId: { in: categoryIds } } }),
+  ]);
 
   return { products, total, page, limit, totalPages: Math.ceil(total / limit) };
 };
@@ -73,6 +143,7 @@ export const productService = {
   createProduct,
   queryProducts,
   getProductById,
+  getProductsByCategory,
   updateProductById,
   deleteProductById,
 };

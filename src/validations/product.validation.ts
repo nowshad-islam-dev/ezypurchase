@@ -4,6 +4,8 @@ export const createProduct = {
   body: z.object({
     name: z.string().min(1),
     description: z.string().optional(),
+    slug: z.string().min(1).slugify(),
+    categoryId: z.uuid(),
     price: z.string().transform((val) => {
       const num = parseInt(val, 10);
       return num < 0 ? 0 : num;
@@ -18,7 +20,7 @@ export const createProduct = {
 
 export const getProducts = {
   query: z.object({
-    name: z.string().optional(),
+    product: z.string().slugify().optional(),
     sortBy: z.string().optional(),
     limit: z
       .string()
@@ -34,6 +36,21 @@ export const getProducts = {
 export const getProduct = {
   params: z.object({
     productId: z.uuid(),
+  }),
+};
+
+export const getProductsByCategory = {
+  query: z.object({
+    category: z.string().slugify(),
+    sortBy: z.string().optional(),
+    limit: z
+      .string()
+      .transform((val) => parseInt(val, 10))
+      .optional(),
+    page: z
+      .string()
+      .transform((val) => parseInt(val, 10))
+      .optional(),
   }),
 };
 
